@@ -1,8 +1,8 @@
-use std::env;
+mod cli;
+mod counter;
 
 use cli::parse_command;
-
-mod cli;
+use std::env;
 
 fn main() {
     let args = env::args().collect::<Vec<_>>().join(" ");
