@@ -2,6 +2,7 @@ use std::{
     error::Error,
     fs,
     io::{self, BufReader, Read},
+    ops::Deref,
     vec,
 };
 
@@ -113,14 +114,19 @@ impl Cli {
             .into_iter()
             .map(|c| c.map(|content| count(&*content, &self.options)))
             .collect::<Vec<Result<Vec<usize>, Box<dyn Error>>>>();
-        let max_digit = (*result).into_iter().fold(0usize, |acc, current| {
-            let max = current
-                .as_ref()
-                .map(|counts| counts.into_iter().max().unwrap_or(&0).to_string().len())
-                .unwrap_or(0);
-            acc.max(max)
-        });
-        result
+        let summary = (*result)
+            .into_iter()
+            .filter(|x| x.is_ok())
+            .map(|x| x.as_ref().unwrap().deref())
+            .fold(Vec::<usize>::new(), |acc, current| {
+                current
+                    .into_iter()
+                    .enumerate()
+                    .map(|(i, current_value)| (current_value + acc.get(i).unwrap_or(&0)))
+                    .collect()
+            });
+        let max_digit = (*summary).into_iter().max().unwrap_or(&0).to_string().len();
+        let counts = result
             .into_iter()
             .enumerate()
             .map(|(i, res)| match res {
@@ -128,7 +134,15 @@ impl Cli {
                 Err(err) => format!("wc: {}", err),
             })
             .collect::<Vec<_>>()
-            .join("")
+            .join("\n");
+        if counts.len() < 1 {
+            return counts;
+        }
+        [
+            counts,
+            format_output(summary, Some("total".to_string()), max_digit),
+        ]
+        .join("\n")
     }
 }
 
