@@ -8,11 +8,7 @@ I love the most the real world applications as Redis, load balancer, webserver, 
 # Build Your Own
 You can find all my implementation,
 
-|Build Your Own|Link|Description|
-|---|---|---| 
-
-
-See others solutions: https://github.com/CodingChallegesFYI/SharedSolutions
+- [X] [wc Tool](https://github.com/amalhanaja/codingchallenges/tree/main/ccwc)
 
 # Special Thanks
 Special thanks to John Cricket for these challenges and I encourage every Engineer from Junior to Principal to do this. Learn a new language or get back to language you have used to code (as me here who learn Rust).
