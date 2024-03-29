@@ -33,20 +33,12 @@ pub fn parse_command(cmd: String) -> Cli {
         count_bytes = index_of_c > index_of_m;
         count_characters = index_of_m > index_of_c;
     }
-    if [count_lines, count_words, count_bytes, count_characters]
-        .iter()
-        .all(|x| !x)
-    {
-        return Cli {
-            files,
-            options: CountOptions::new(true, true, false, true),
-        };
-    }
+    let options = match (count_lines, count_words, count_bytes, count_characters) {
+        (false, false, false, false) => CountOptions::new(true, true, false, true),
+        _ => CountOptions::new(count_bytes, count_lines, count_characters, count_words),
+    };
 
-    Cli {
-        files,
-        options: CountOptions::new(count_bytes, count_lines, count_characters, count_words),
-    }
+    Cli { files, options }
 }
 
 fn build_command() -> Command {
@@ -127,15 +119,20 @@ impl Cli {
             });
         let max_digit = (*summary).into_iter().max().unwrap_or(&0).to_string().len();
         let counts = result
+            .deref()
             .into_iter()
             .enumerate()
             .map(|(i, res)| match res {
-                Ok(counts) => format_output(counts, self.files.get(i).cloned(), max_digit),
+                Ok(counts) => format_output(
+                    counts.deref().to_vec(),
+                    self.files.get(i).cloned(),
+                    max_digit,
+                ),
                 Err(err) => format!("wc: {}", err),
             })
             .collect::<Vec<_>>()
             .join("\n");
-        if counts.len() < 1 {
+        if result.len() <= 1 {
             return counts;
         }
         [
@@ -149,11 +146,13 @@ impl Cli {
 #[cfg(test)]
 mod tests {
 
+    use std::vec;
+
     use super::parse_command;
 
     #[test]
     fn given_no_flags_and_args_when_parse_command_then_returns_default_flag_with_empty_files() {
-        // When
+        // Act
         let result = parse_command("ccwc".to_string());
 
         // Assert
@@ -166,7 +165,7 @@ mod tests {
 
     #[test]
     fn given_multiple_args_when_parse_command_then_returns_multiple_files() {
-        // When
+        // Act
         let result = parse_command("ccwc files1.txt files2.txt".to_string());
 
         // Assert
@@ -182,7 +181,7 @@ mod tests {
 
     #[test]
     fn given_one_flag_single_args_when_parse_command_then_returns_multiple_files() {
-        // When
+        // Act
         let result = parse_command("ccwc -l file.txt".to_string());
 
         // Assert
@@ -192,7 +191,7 @@ mod tests {
         assert!(!result.options.count_words);
         assert!(!result.options.count_characters);
 
-        // When
+        // Act
         let result = parse_command("ccwc -c file.txt".to_string());
 
         // Assert
@@ -202,7 +201,7 @@ mod tests {
         assert!(!result.options.count_words);
         assert!(!result.options.count_characters);
 
-        // When
+        // Act
         let result = parse_command("ccwc -w file.txt".to_string());
 
         // Assert
@@ -212,7 +211,7 @@ mod tests {
         assert!(result.options.count_words);
         assert!(!result.options.count_characters);
 
-        // When
+        // Act
         let result = parse_command("ccwc -m file.txt".to_string());
 
         // Assert
@@ -225,7 +224,7 @@ mod tests {
 
     #[test]
     fn given_flags_c_and_m_when_parse_command_then_override_previous_flag() {
-        // When
+        // Act
         let result = parse_command("ccwc -c -m file.txt".to_string());
 
         // Assert
@@ -235,7 +234,7 @@ mod tests {
         assert!(!result.options.count_words);
         assert!(result.options.count_characters);
 
-        // When
+        // Act
         let result = parse_command("ccwc -cm file.txt".to_string());
 
         // Assert
@@ -253,5 +252,38 @@ mod tests {
         assert!(!result.options.count_lines);
         assert!(!result.options.count_words);
         assert!(!result.options.count_characters);
+    }
+
+    #[test]
+    fn test_execute_single_file() {
+        // Act
+        let result = parse_command("ccwc -c -m test.txt".to_string()).execute();
+
+        // Assert
+        assert_eq!("339292 test.txt".to_string(), result)
+    }
+
+    #[test]
+    fn test_execute_multiple_file() {
+        // Act
+        let result = parse_command("ccwc -c -m test.txt test.txt".to_string()).execute();
+
+        // Assert
+        assert_eq!(
+            "339292 test.txt\n339292 test.txt\n678584 total".to_string(),
+            result,
+        );
+    }
+
+    #[test]
+    fn test_execute_multiple_file_with_file_not_found() {
+        // Act
+        let result = parse_command("ccwc -c -m test.txt test.txt not_found".to_string()).execute();
+
+        // Assert
+        assert_eq!(
+            "339292 test.txt\n339292 test.txt\nwc: No such file or directory (os error 2)\n678584 total".to_string(),
+            result,
+        );
     }
 }
