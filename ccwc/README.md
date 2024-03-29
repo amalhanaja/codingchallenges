@@ -41,11 +41,11 @@ It will generate an optimized binary named `ccwc` in `target/release` directory.
 
 
 # How to install
-2. To Install `ccwc`, run following command:
+1. To Install `ccwc`, run following command:
    ```bash
    $ cargo install --path ccwc
    ```
-3. Check whether you have `ccwc` installed correctly, open a shell and enter this line:
+2. Check whether you have `ccwc` installed correctly, open a shell and enter this line:
    ```bash
    $ ccwc --version
    ```
@@ -53,7 +53,7 @@ It will generate an optimized binary named `ccwc` in `target/release` directory.
    ```bash
    ccwc 1.0.0
    ```
-4. Great. ccwc is installed now. you can use ccwc directly in your terminal
+3. Great. ccwc is installed now. you can use ccwc directly in your terminal
    **Example**
    ```bash
    $ ccwc test.txt
