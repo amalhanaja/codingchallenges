@@ -78,9 +78,10 @@ $ cat test.txt | cargo ccwc
 ```
 
 # Let's connect
-* https://twitter.com/amalhanaja
-* https://linkedin.com/in/amalhanaja
-* https://www.tiktok.com/@amalhanaja
-* https://www.youtube.com/@amalhanaja
+* [LinkedIn](https://linkedin.com/in/amalhanaja)
+* [Github](https://github.com/amalhanaja)
+* [TikTok](https://www.tiktok.com/@amalhanaja)
+* [Youtube](https://www.youtube.com/@amalhanaja)
+* [X](https://twitter.com/amalhanaja)
 
 
