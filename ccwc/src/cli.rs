@@ -77,9 +77,9 @@ fn build_command() -> Command {
 }
 
 impl Cli {
-    fn get_content(&self) -> Vec<Result<String, Box<dyn Error>>> {
+    fn get_content(&self, reader: &mut dyn io::BufRead) -> Vec<Result<String, Box<dyn Error>>> {
         if self.files.is_empty() {
-            return self.get_content_from_input();
+            return self.get_content_from_input(reader);
         }
         self.get_content_from_files()
     }
@@ -91,17 +91,20 @@ impl Cli {
             .collect()
     }
 
-    fn get_content_from_input(&self) -> Vec<Result<String, Box<dyn Error>>> {
+    fn get_content_from_input(
+        &self,
+        reader: &mut dyn io::BufRead,
+    ) -> Vec<Result<String, Box<dyn Error>>> {
         let mut content = String::new();
-        let mut reader = BufReader::new(io::stdin());
+        let mut reader = BufReader::new(reader);
         match reader.read_to_string(&mut content) {
             Ok(_) => vec![Ok(content)],
             Err(err) => vec![Err(Box::new(err))],
         }
     }
 
-    pub fn execute(&self) -> String {
-        let contents = self.get_content();
+    pub fn execute(&self, reader: &mut dyn io::BufRead) -> String {
+        let contents = self.get_content(reader);
         let result = contents
             .into_iter()
             .map(|c| c.map(|content| count(&*content, &self.options)))
@@ -146,7 +149,7 @@ impl Cli {
 #[cfg(test)]
 mod tests {
 
-    use std::vec;
+    use std::{io, vec};
 
     use super::parse_command;
 
@@ -257,7 +260,8 @@ mod tests {
     #[test]
     fn test_execute_single_file() {
         // Act
-        let result = parse_command("ccwc -c -m test.txt".to_string()).execute();
+        let result =
+            parse_command("ccwc -c -m test.txt".to_string()).execute(&mut io::stdin().lock());
 
         // Assert
         assert_eq!("339292 test.txt".to_string(), result)
@@ -266,7 +270,8 @@ mod tests {
     #[test]
     fn test_execute_multiple_file() {
         // Act
-        let result = parse_command("ccwc -c -m test.txt test.txt".to_string()).execute();
+        let result = parse_command("ccwc -c -m test.txt test.txt".to_string())
+            .execute(&mut io::stdin().lock());
 
         // Assert
         assert_eq!(
@@ -278,12 +283,21 @@ mod tests {
     #[test]
     fn test_execute_multiple_file_with_file_not_found() {
         // Act
-        let result = parse_command("ccwc -c -m test.txt test.txt not_found".to_string()).execute();
+        let result = parse_command("ccwc -c -m test.txt test.txt not_found".to_string())
+            .execute(&mut io::stdin().lock());
 
         // Assert
         assert_eq!(
             "339292 test.txt\n339292 test.txt\nwc: No such file or directory (os error 2)\n678584 total".to_string(),
             result,
         );
+    }
+
+    #[test]
+    fn test_execute_from_reader() {
+        let result = parse_command("ccwc -c -m".to_string()).execute(&mut "Alfian".as_bytes());
+
+        // Assert
+        assert_eq!("6".to_string(), result,);
     }
 }
