@@ -150,7 +150,7 @@ impl Cli {
 mod tests {
 
     use std::{
-        io::{self, BufRead, Error},
+        io::{self, Error},
         vec,
     };
 
