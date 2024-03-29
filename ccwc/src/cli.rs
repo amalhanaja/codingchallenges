@@ -149,7 +149,10 @@ impl Cli {
 #[cfg(test)]
 mod tests {
 
-    use std::{io, vec};
+    use std::{
+        io::{self, BufRead, Error},
+        vec,
+    };
 
     use super::parse_command;
 
@@ -299,5 +302,27 @@ mod tests {
 
         // Assert
         assert_eq!("6".to_string(), result,);
+    }
+
+    #[test]
+    fn test_execute_from_error_reader() {
+        struct FakeReader;
+        impl io::Read for FakeReader {
+            fn read(&mut self, _: &mut [u8]) -> io::Result<usize> {
+                Err(Error::new(io::ErrorKind::Other, "failed"))
+            }
+        }
+        impl io::BufRead for FakeReader {
+            fn fill_buf(&mut self) -> io::Result<&[u8]> {
+                unreachable!()
+            }
+
+            fn consume(&mut self, _: usize) {}
+        }
+        let reader = &mut FakeReader {};
+        let result = parse_command("ccwc -c -m".to_string()).execute(reader);
+
+        // Assert
+        assert_eq!("wc: failed".to_string(), result);
     }
 }
